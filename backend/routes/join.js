@@ -26,7 +26,7 @@ joinrouter.post("/join", async function (req, res) {
         }
 
         
-        const existing = await JoinQueue_model.findOne({ // bug 1: missing await
+        const existing = await JoinQueue_model.findOne({ 
             customerName,
             shopId,
             status: "waiting"  
