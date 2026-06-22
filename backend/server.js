@@ -11,17 +11,19 @@ app.use(express.json())
 
 connectionDB();
 
+const { shop_router }=require("../backend/routes/shop_routes")
+const { queue_router } = require ("../backend/routes/queue_router")
+const { bookingrouter } = require ("../backend/routes/booking");
+const { joinrouter } = require("../backend/routes/join");
+const { shop_router } = require("./routes/shop_routes")
+
+
 app.use("/join" , joinrouter);
 app.use("/booking",bookingrouter);
 app.use("/queue",queue_router);
 app.use("/shop",shop_router);
 
 
-const { shop_router }=require("../backend/routes/shop_routes")
-const { queue_router } = require ("../backend/routes/queue_router")
-const { bookingrouter } = require ("../backend/routes/booking");
-const { joinrouter } = require("../backend/routes/join");
-const { shop_router } = require("./routes/shop_routes")
 
 app.get("/", (req, res) => {
   res.send("Server running");

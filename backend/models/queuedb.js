@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const schema = mongoose.Schema;
 
 // ================= QUEUE =================
+
 const joinSchema = new schema({
     shopId: {
         type: mongoose.Schema.Types.ObjectId,
