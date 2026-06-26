@@ -4,16 +4,26 @@ const shop_router = Router();
 
 const { shop_model } = require("../models/queuedb")
 
+const mongoose = require("mongoose");
+
 shop_router.post("/create", async function (req, res) {
     try {
-        const { name, serviceType, shopName, address, phone } = req.body;
+        let { name, serviceType, shopName, address, phone } = req.body;
+
+        name = name?.trim();
+        serviceType = serviceType?.trim();
+        shopName = shopName?.trim();
+        address = address?.trim();
+        phone = phone?.trim();
+
+
 
         if (
-            !name?.trim() ||
-            !serviceType?.trim() ||
-            !shopName?.trim() ||
-            !address?.trim() ||
-            !phone?.trim()
+            !name ||
+            !serviceType ||
+            !shopName ||
+            !address ||
+            !phone
         ) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -24,8 +34,7 @@ shop_router.post("/create", async function (req, res) {
         }
 
         const existing_shop = await shop_model.findOne({
-            name: name,
-            phone: phone
+            phone
         });
 
         if (existing_shop) {
@@ -104,7 +113,7 @@ shop_router.get("/:shopId", async function (req, res) {
 });
 
 
-shop_router.put('/update/:shopId', async function (req, res) {
+shop_router.put('/:shopId', async function (req, res) {
     try {
         const { shopId } = req.params;
         const { name, serviceType, shopName, address, phone } = req.body;
@@ -119,11 +128,13 @@ shop_router.put('/update/:shopId', async function (req, res) {
         ) {
             return res.status(400).json({ message: "All fields are required" });
         }
-        if (!/^\d{10}$/.test(phone)) {
+
+        if (!/^\d{10}$/.test(phone.trim())) {
             return res.status(400).json({
                 message: "Invalid phone number"
             });
         }
+
 
 
         if (!mongoose.Types.ObjectId.isValid(shopId)) {
@@ -152,17 +163,19 @@ shop_router.put('/update/:shopId', async function (req, res) {
         }
 
 
-        find_shop.name = name;
-        find_shop.serviceType = serviceType;
-        find_shop.shopName = shopName;
-        find_shop.address = address;
-        find_shop.phonne = phone;
+
+
+        find_shop.name = name.trim();
+        find_shop.serviceType = serviceType.trim();
+        find_shop.shopName = shopName.trim();
+        find_shop.address = address.trim();
+        find_shop.phone = phone.trim();
 
 
         await find_shop.save();
 
         return res.status(200).json({
-            message: "your data is successfully upated",
+            message: "your data is successfully updated",
             data: find_shop
         });
 
@@ -173,6 +186,38 @@ shop_router.put('/update/:shopId', async function (req, res) {
         });
     }
 
+});
+
+
+shop_router.delete('/:shopId', async function (req, res) {
+    try {
+        const { shopId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({
+                message: "invalid shop id "
+            })
+        }
+
+        const find_shop = await shop_model.findById(shopId);
+
+        if (!find_shop) {
+            return res.status(404).json({
+                message: "shop not found"
+            })
+        }
+
+        await find_shop.deleteOne();
+
+        return res.status(200).json({
+            message: "shop deleted successfully"
+        })
+    } catch (e) {
+        return res.status(500).json({
+            message: "internal server error",
+            error: e.message
+        })
+    }
 });
 
 
