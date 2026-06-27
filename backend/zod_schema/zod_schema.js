@@ -24,7 +24,20 @@ const shopSchema = z.object({
         .regex(/^\d{10}$/, { message: "Invalid phone number" })
 });
 
+
+const queuejoinSchema = z.object({
+    customerName: z
+        .string()
+        .trim()
+        .min(1, { message: "Customer name is required" }),
+    shopId: z
+        .string()
+        .trim()
+        .min(1, { message: "Shop ID is required" })         
+});
+
 module.exports = {
-    shopSchema
+    shopSchema,
+    queuejoinSchema
 }
 

@@ -4,7 +4,7 @@ const shop_router = Router();
 
 const { shop_model } = require("../models/queuedb")
 
-const {shopSchema  } = require ("../zod_schema/zshop_schema");
+const {shopSchema  } = require ("../zod_schema/zod_schema");
 
 const mongoose = require("mongoose");
 
