@@ -12,6 +12,12 @@ queue_router.get("/", async function (req, res) {
         if (!shopId) {
             return res.status(400).json({ message: "shopId required" });
         }
+
+        if (!mongoose.Types.ObjectId.isValide(shopId)) {
+            return res.status(400).json({ message: "Invalid shopId" });
+        }
+
+
         const shopExists = await shop_model.findById(shopId);
         if (!shopExists) {
             return res.status(404).json({ message: "Shop not found" });
@@ -47,6 +53,11 @@ queue_router.post("/next", async function (req, res) {
 
         if (!shopId) {
             return res.status(400).json({ message: "shopId required" });
+        }
+
+
+        if(!mongoose.Types.ObjectId.isValid(shopId)){
+            return res.status(400).json({message:"invalid shopId"})
         }
         const shopExists = await shop_model.findById(shopId);
         if (!shopExists) {
@@ -86,6 +97,6 @@ queue_router.post("/next", async function (req, res) {
 
 shop_router.
 
-module.exports = {
+    module.exports = {
     queue_router
 };
