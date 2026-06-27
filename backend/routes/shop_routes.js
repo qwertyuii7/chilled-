@@ -4,34 +4,26 @@ const shop_router = Router();
 
 const { shop_model } = require("../models/queuedb")
 
+const {shopSchema  } = require ("../zod_schema/zshop_schema");
+
 const mongoose = require("mongoose");
 
 shop_router.post("/create", async function (req, res) {
     try {
-        let { name, serviceType, shopName, address, phone } = req.body;
 
-        name = name?.trim();
-        serviceType = serviceType?.trim();
-        shopName = shopName?.trim();
-        address = address?.trim();
-        phone = phone?.trim();
+        const validation =shopSchema.safeParse(req.body);
 
+        if(!validation.success){
 
-
-        if (
-            !name ||
-            !serviceType ||
-            !shopName ||
-            !address ||
-            !phone
-        ) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        if (!/^\d{10}$/.test(phone)) {
             return res.status(400).json({
-                message: "Invalid phone number"
-            });
+                message: "validation error",
+                errors: validation.error.errors
+            })
         }
+
+        let { name, serviceType, shopName, address, phone } = validation.data;
+
+
 
         const existing_shop = await shop_model.findOne({
             phone
@@ -116,31 +108,26 @@ shop_router.get("/:shopId", async function (req, res) {
 shop_router.put('/:shopId', async function (req, res) {
     try {
         const { shopId } = req.params;
-        const { name, serviceType, shopName, address, phone } = req.body;
+        const validation = shopSchema.safeParse(req.body);
 
-
-        if (
-            !name?.trim() ||
-            !serviceType?.trim() ||
-            !shopName?.trim() ||
-            !address?.trim() ||
-            !phone?.trim()
-        ) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        if (!/^\d{10}$/.test(phone.trim())) {
+        if (!validation.success) {
             return res.status(400).json({
-                message: "Invalid phone number"
-            });
+                message: "validation error",
+                errors: validation.error.errors
+            })
         }
+
+        let { name, serviceType, shopName, address, phone } = validation.data;
+
+
+
 
 
 
         if (!mongoose.Types.ObjectId.isValid(shopId)) {
             return res.status(400).json({
-                message: "Invalid shop id"
-            });
+                message: "invalid shop id"
+            })
         }
 
         const find_shop = await shop_model.findById(shopId);
