@@ -17,7 +17,7 @@ shop_router.post("/create", async function (req, res) {
 
             return res.status(400).json({
                 message: "validation error",
-                errors: validation.error.errors
+                errors: validation.error.issues
             })
         }
 
@@ -105,33 +105,50 @@ shop_router.get("/:shopId", async function (req, res) {
 });
 
 
-shop_router.put('/:shopId', async function (req, res) {
+
+
+shop_router.put("/:shopId", async function (req, res) {
     try {
+
         const { shopId } = req.params;
+
+      
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({
+                message: "Invalid shop id"
+            });
+        }
+
         const validation = shopSchema.safeParse(req.body);
 
         if (!validation.success) {
             return res.status(400).json({
-                message: "validation error",
-                errors: validation.error.errors
-            })
+                message: "Validation error",
+                errors: validation.error.issues.map(issue => ({
+                    field: issue.path[0],
+                    message: issue.message
+                }))
+            });
         }
 
-        let { name, serviceType, shopName, address, phone } = validation.data;
+        const {
+            name,
+            serviceType,
+            shopName,
+            address,
+            phone
+        } = validation.data;
 
+      
+        const findShop = await shop_model.findById(shopId);
 
-
-
-
-
-        if (!mongoose.Types.ObjectId.isValid(shopId)) {
-            return res.status(400).json({
-                message: "invalid shop id"
-            })
+        if (!findShop) {
+            return res.status(404).json({
+                message: "Shop doesn't exist"
+            });
         }
 
-        const find_shop = await shop_model.findById(shopId);
-
+      
         const existingShop = await shop_model.findOne({
             phone,
             _id: { $ne: shopId }
@@ -143,36 +160,29 @@ shop_router.put('/:shopId', async function (req, res) {
             });
         }
 
-        if (!find_shop) {
-            return res.status(404).json({
-                message: "shop doesn't exist"
-            })
-        }
+        Object.assign(findShop, {
+            name,
+            serviceType,
+            shopName,
+            address,
+            phone
+        });
 
+        
+        await findShop.save();
 
-
-
-        find_shop.name = name.trim();
-        find_shop.serviceType = serviceType.trim();
-        find_shop.shopName = shopName.trim();
-        find_shop.address = address.trim();
-        find_shop.phone = phone.trim();
-
-
-        await find_shop.save();
-
+   
         return res.status(200).json({
-            message: "your data is successfully updated",
-            data: find_shop
+            message: "Shop updated successfully",
+            data: findShop
         });
 
     } catch (e) {
         return res.status(500).json({
-            message: "internal server error",
+            message: "Internal server error",
             error: e.message
         });
     }
-
 });
 
 
