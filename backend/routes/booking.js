@@ -17,7 +17,7 @@ const STATUS = {
 };
 
 
-bookingrouter.post("/create_booking", async function (req, res) {
+bookingrouter.post("/", async function (req, res) {
     try {
         const validation = bookingSchema.safeParse(req.body);
 
@@ -71,7 +71,65 @@ bookingrouter.post("/create_booking", async function (req, res) {
 });
 
 
-bookingrouter.get("/booking/:bookingId", async function (req, res) {
+bookingrouter.get("/", async function (req, res) {
+    try {
+        const { shopId, status, date } = req.query;
+
+        if (!shopId) {
+            return res.status(400).json({ message: "shopId is required" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({ message: "Invalid shopId" });
+        }
+
+        const shopExists = await shop_model.findById(shopId);
+
+        if (!shopExists) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        const filter = { shopId };
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (date) {
+            const selectedDate = new Date(date);
+
+            if (isNaN(selectedDate.getTime())) {
+                return res.status(400).json({ message: "Invalid date" });
+            }
+
+            const nextDay = new Date(selectedDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            filter.date = {
+                $gte: selectedDate,
+                $lt: nextDay
+            };
+        }
+
+        const bookings = await Booking_model
+            .find(filter)
+            .sort({ date: 1, "slot.from": 1 });
+
+        return res.status(200).json({
+            total: bookings.length,
+            data: bookings
+        });
+
+    } catch (e) {
+        return res.status(500).json({
+            message: "Internal server error",
+            error: e.message
+        });
+    }
+});
+
+
+bookingrouter.get("/:bookingId", async function (req, res) {
     try {
         const { bookingId } = req.params;
 
@@ -98,7 +156,7 @@ bookingrouter.get("/booking/:bookingId", async function (req, res) {
 });
 
 
-bookingrouter.put("/booking/:bookingId", async function (req, res) {
+bookingrouter.put("/:bookingId", async function (req, res) {
     try {
         const { bookingId } = req.params;
 
@@ -146,11 +204,13 @@ bookingrouter.put("/booking/:bookingId", async function (req, res) {
             return res.status(400).json({ message: "This slot is already booked" });
         }
 
-        booking.shopId = shopId;
-        booking.customerName = customerName;
-        booking.slot = slot;
-        booking.date = date;
-        booking.status = status ?? STATUS.WAITING;
+        Object.assign(booking, {
+            shopId,
+            customerName,
+            slot,
+            date,
+            status: status ?? STATUS.WAITING
+        });
 
         await booking.save();
 
@@ -168,7 +228,7 @@ bookingrouter.put("/booking/:bookingId", async function (req, res) {
 });
 
 
-bookingrouter.delete("/booking/:bookingId", async function (req, res) {
+bookingrouter.delete("/:bookingId", async function (req, res) {
     try {
         const { bookingId } = req.params;
 
@@ -189,59 +249,6 @@ bookingrouter.delete("/booking/:bookingId", async function (req, res) {
     } catch (e) {
         return res.status(500).json({
             message: "Error deleting booking",
-            error: e.message
-        });
-    }
-});
-
-
-bookingrouter.get("/bookings", async function (req, res) {
-    try {
-        const { shopId, status, date } = req.query;
-
-        if (!shopId) {
-            return res.status(400).json({ message: "shopId is required" });
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(shopId)) {
-            return res.status(400).json({ message: "Invalid shopId" });
-        }
-
-        const shopExists = await shop_model.findById(shopId);
-
-        if (!shopExists) {
-            return res.status(404).json({ message: "Shop not found" });
-        }
-
-        const filter = { shopId };
-
-        if (status) {
-            filter.status = status;
-        }
-
-        if (date) {
-            const selectedDate = new Date(date);
-            const nextDay = new Date(selectedDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-
-            filter.date = {
-                $gte: selectedDate,
-                $lt: nextDay
-            };
-        }
-
-        const bookings = await Booking_model
-            .find(filter)
-            .sort({ date: 1, "slot.from": 1 });
-
-        return res.status(200).json({
-            total: bookings.length,
-            data: bookings
-        });
-
-    } catch (e) {
-        return res.status(500).json({
-            message: "Internal server error",
             error: e.message
         });
     }
@@ -273,6 +280,7 @@ bookingrouter.get("/dashboard", async function (req, res) {
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         const [
+            totalBookings,
             todayBookings,
             bookingWaiting,
             bookingConfirmed,
@@ -281,6 +289,8 @@ bookingrouter.get("/dashboard", async function (req, res) {
             queueWaiting,
             nextInQueue
         ] = await Promise.all([
+
+            Booking_model.countDocuments({ shopId }),
 
             Booking_model.countDocuments({
                 shopId,
@@ -302,6 +312,7 @@ bookingrouter.get("/dashboard", async function (req, res) {
 
         return res.status(200).json({
             bookings: {
+                total: totalBookings,
                 today: todayBookings,
                 waiting: bookingWaiting,
                 confirmed: bookingConfirmed,
