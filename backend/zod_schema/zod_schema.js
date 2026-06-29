@@ -33,7 +33,11 @@ const queuejoinSchema = z.object({
     shopId: z
         .string()
         .trim()
-        .min(1, { message: "Shop ID is required" })         
+        .min(1, { message: "Shop ID is required" }),       
+    phone: z
+        .string()
+        .trim()
+        .regex(/^\d{10}$/, { message: "Invalid phone number" })
 });
 
 module.exports = {

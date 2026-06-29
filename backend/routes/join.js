@@ -7,17 +7,25 @@ const joinrouter = Router();
 const { JoinQueue_model } = require("../models/queuedb")
 const { shop_model } = require("../models/queuedb")
 
+const { queuejoinSchema } = require("../zod_schema/zod_schema");
+
 joinrouter.post("/join", async function (req, res) {
     try {
-        const { customerName, shopId } = req.body;
+        const validation = queuejoinSchema.safeParse(req.body);
 
-        if (!customerName || customerName.trim() === "") {
-            return res.status(400).json({ message: "customerName is required" });
+        if(!validation.sucess){
+            return res.status(400).json({
+                message: "validation error",
+                errors: validation.error.issues
+            })
         }
 
-        if (!shopId) {
-            return res.status(400).json({ message: "shopId is required" });
+        const {customerName, shopId, phone} = validation.data;
+
+        if(!mongoose.Types.ObjectId.isValid(shopId)){
+            return res.status(400).json({ message: "Invalid shopId" });
         }
+
 
         
         const shopExists = await shop_model.findById(shopId);
@@ -29,6 +37,7 @@ joinrouter.post("/join", async function (req, res) {
         const existing = await JoinQueue_model.findOne({ 
             customerName,
             shopId,
+            phone,
             status: "waiting"  
         });
 
@@ -43,8 +52,14 @@ joinrouter.post("/join", async function (req, res) {
             joinedAt: new Date()
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "Joined queue",
+            peopleAhead: await JoinQueue_model.countDocuments({
+                shopId,
+                status: "waiting",
+                joinedAt: { $lt: saved.joinedAt }
+            }),
+            position: peopleAhead + 1,
             data: saved
         });
 
