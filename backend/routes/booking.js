@@ -300,7 +300,110 @@ bookingrouter.get("/bookings", async function (req, res) {
 });
 
 
+bookingrouter.get("/dashboard", async function (req, res) {
 
+    try {
+
+        const { shopId } = req.query;
+
+        if (!shopId) {
+            return res.status(400).json({
+                message: "shopId is required"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({
+                message: "Invalid shopId"
+            });
+        }
+
+        const shopExists = await shop_model.findById(shopId);
+
+        if (!shopExists) {
+            return res.status(404).json({
+                message: "Shop not found"
+            });
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const [
+            totalBookings,
+            waiting,
+            confirmed,
+            done,
+            cancelled,
+            todayBookings
+        ] = await Promise.all([
+
+            Booking_model.countDocuments({
+                shopId
+            }),
+
+            Booking_model.countDocuments({
+                shopId,
+                status: "waiting"
+            }),
+
+            Booking_model.countDocuments({
+                shopId,
+                status: "confirmed"
+            }),
+
+            Booking_model.countDocuments({
+                shopId,
+                status: "done"
+            }),
+
+            Booking_model.countDocuments({
+                shopId,
+                status: "cancelled"
+            }),
+
+            Booking_model.countDocuments({
+                shopId,
+                date: {
+                    $gte: today,
+                    $lt: tomorrow
+                }
+            })
+
+        ]);
+
+        return res.status(200).json({
+
+            totalBookings,
+
+            todayBookings,
+
+            waiting,
+
+            confirmed,
+
+            done,
+
+            cancelled
+
+        });
+
+    } catch (e) {
+
+        return res.status(500).json({
+
+            message: "Internal server error",
+
+            error: e.message
+
+        });
+
+    }
+
+});
 
 
 module.exports = {
