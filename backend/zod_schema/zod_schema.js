@@ -59,12 +59,14 @@ const bookingSchema = z.object({
             }
         ),
 
-    status: z.enum([
-        "waiting",
-        "confirmed",
-        "cancelled",
-        "done"
-    ]).default("waiting")
+    status: z
+        .enum([
+            "waiting",
+            "confirmed",
+            "cancelled",
+            "done"
+        ])
+        .optional()
 });
 
 module.exports = {
