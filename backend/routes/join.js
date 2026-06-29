@@ -1,4 +1,4 @@
-
+const mongoose = require ("mongoose");
 
 const { Router } = require("express");
 
@@ -13,7 +13,7 @@ joinrouter.post("/join", async function (req, res) {
     try {
         const validation = queuejoinSchema.safeParse(req.body);
 
-        if(!validation.sucess){
+        if(!validation.success){
             return res.status(400).json({
                 message: "validation error",
                 errors: validation.error.issues
@@ -35,7 +35,6 @@ joinrouter.post("/join", async function (req, res) {
 
         
         const existing = await JoinQueue_model.findOne({ 
-            customerName,
             shopId,
             phone,
             status: "waiting"  
@@ -48,23 +47,30 @@ joinrouter.post("/join", async function (req, res) {
         const saved = await JoinQueue_model.create({
             shopId,
             customerName,
+            phone,
             status: "waiting",
-            joinedAt: new Date()
+            joinedAt:{
+                
+            }
         });
+
+        const people_Ahead = await JoinQueue_model.countDocuments({
+            shopId,
+            status: "waiting",
+            joinedAt: { $lt: saved.joinedAt }
+        });
+
+        const position = people_Ahead + 1;
 
         return res.status(201).json({
             message: "Joined queue",
-            peopleAhead: await JoinQueue_model.countDocuments({
-                shopId,
-                status: "waiting",
-                joinedAt: { $lt: saved.joinedAt }
-            }),
-            position: peopleAhead + 1,
+            people_Ahead,
+            position,
             data: saved
         });
 
     } catch (e) {
-        res.status(500).json({
+        return res.status(500).json({
             message: "Error joining queue",
             error: e.message
         });

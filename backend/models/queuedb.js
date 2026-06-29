@@ -7,10 +7,16 @@ const joinSchema = new schema({
     shopId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Shop",
-        required: false
+        required: true
     },
 
     customerName: {
+        type: String,
+        required: true,
+        trim: true
+    },
+
+    phone: {
         type: String,
         required: true,
         trim: true
@@ -25,6 +31,10 @@ const joinSchema = new schema({
     joinedAt: {
         type: Date,
         default: Date.now
+    },
+
+    servedAt: {
+        type: Date
     }
 
 }, { timestamps: true });
@@ -74,7 +84,7 @@ const shopSchema = new mongoose.Schema({
     name: { type: String, required: true },
     serviceType: { type: String, required: true },
     shopName: { type: String, required: true },
-    
+
     address: { type: String, required: true },
     phone: { type: String, required: true },
 }, { timestamps: true });
