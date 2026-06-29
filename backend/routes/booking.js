@@ -74,6 +74,37 @@ bookingrouter.post("/create_booking", async function (req, res) {
 });
 
 
+bookingrouter.get("/bookings/:shopId", async function (req, res)) {
+    try{
+        const {shopId }= req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(shopId)){
+            return res.status(400).json({ message: "Invalid shopId" });
+        }
+
+        const exist = await shop_model.findById(shopId);
+
+        if(!exist){
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        const bookings = await Booking_model.find({ shopId }).sort({ date: 1, "slot.from": 1 });
+
+        return res.status(200).json({
+            message: "Bookings fetched successfully",
+            data: bookings
+        }); 
+
+
+
+    }catch(e){
+        return res.status(500).json({
+            messsage:" error fetching bookings",
+            error: e.message
+        })
+    }
+},
+
 module.exports = {
     bookingrouter
 }
