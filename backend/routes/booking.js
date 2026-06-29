@@ -233,6 +233,74 @@ bookingrouter.delete("/booking/:bookingId",async function (req , res){
     }
 });
 
+bookingrouter.get("/bookings", async function (req, res) {
+    try {
+        const { shopId, status, date } = req.query;
+
+        if (!shopId) {
+            return res.status(400).json({
+                message: "shopId is required"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({
+                message: "Invalid shopId"
+            });
+        }
+
+        const shopExists = await shop_model.findById(shopId);
+
+        if (!shopExists) {
+            return res.status(404).json({
+                message: "Shop not found"
+            });
+        }
+
+        const filter = {
+            shopId
+        };
+
+        if (status) {
+            filter.status = status;
+        }
+
+        if (date) {
+            const selectedDate = new Date(date);
+
+            const nextDay = new Date(selectedDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            filter.date = {
+                $gte: selectedDate,
+                $lt: nextDay
+            };
+        }
+
+        const bookings = await Booking_model
+            .find(filter)
+            .sort({
+                date: 1,
+                "slot.from": 1
+            });
+
+        return res.status(200).json({
+            total: bookings.length,
+            data: bookings
+        });
+
+    } catch (e) {
+
+        return res.status(500).json({
+            message: "Internal server error",
+            error: e.message
+        });
+
+    }
+});
+
+
+
 
 
 module.exports = {
