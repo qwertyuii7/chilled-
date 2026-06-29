@@ -207,6 +207,32 @@ bookingrouter.put("/booking/:bookingId", async function (req, res) {
 })
 
 
+bookingrouter.delete("/booking/:bookingId",async function (req , res){
+    try{
+        const { bookingId } = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(bookingId)){
+            return res.status(400).json({ message: "Invalid bookingId" });
+        }
+
+        const deletedBooking = await Booking_model.findByIdAndDelete(bookingId);
+
+        if(!deletedBooking){
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        return res.status(200).json({
+            message: "Booking deleted successfully",
+            data: deletedBooking
+        }); 
+    }catch (e) {
+        return res.status(500).json({
+            message: "Error deleting booking",
+            error: e.message
+        });
+    }
+});
+
 
 
 module.exports = {
