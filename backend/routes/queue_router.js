@@ -39,10 +39,12 @@ queue_router.get("/", async function (req, res) {
             joinedAt: user.joinedAt
         }));
 
-        res.json({
+
+        return res.status(200).json({
             total: formatted.length,
             queue: formatted
         });
+
 
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -53,7 +55,7 @@ queue_router.post("/next", async function (req, res) {
     try {
         const { shopId } = req.body;
 
-        
+
         if (!shopId) {
             return res.status(400).json({
                 message: "shopId is required"
@@ -66,7 +68,7 @@ queue_router.post("/next", async function (req, res) {
             });
         }
 
-        
+
         const shopExists = await shop_model.findById(shopId);
 
         if (!shopExists) {
@@ -75,7 +77,7 @@ queue_router.post("/next", async function (req, res) {
             });
         }
 
-        
+
         const nextUser = await JoinQueue_model
             .findOne({
                 shopId,
@@ -89,12 +91,12 @@ queue_router.post("/next", async function (req, res) {
             });
         }
 
-        
+
         nextUser.status = "done";
-        nextUser.servedAt = new Date();      
+        nextUser.servedAt = new Date();
         await nextUser.save();
 
-        
+
         const upcoming = await JoinQueue_model
             .findOne({
                 shopId,
@@ -102,7 +104,7 @@ queue_router.post("/next", async function (req, res) {
             })
             .sort({ joinedAt: 1 });
 
-        
+
         const remaining = await JoinQueue_model.countDocuments({
             shopId,
             status: "waiting"
@@ -122,9 +124,6 @@ queue_router.post("/next", async function (req, res) {
         });
     }
 });
-
-
-
 
 
 module.exports = {
