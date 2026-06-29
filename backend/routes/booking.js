@@ -75,16 +75,16 @@ bookingrouter.post("/create_booking", async function (req, res) {
 
 
 bookingrouter.get("/booking/:shopId", async function (req, res) {
-    try{
-        const {shopId }= req.params;
+    try {
+        const { shopId } = req.params;
 
-        if(!mongoose.Types.ObjectId.isValid(shopId)){
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
             return res.status(400).json({ message: "Invalid shopId" });
         }
 
         const exist = await shop_model.findById(shopId);
 
-        if(!exist){
+        if (!exist) {
             return res.status(404).json({ message: "Shop not found" });
         }
 
@@ -93,30 +93,30 @@ bookingrouter.get("/booking/:shopId", async function (req, res) {
         return res.status(200).json({
             message: "Bookings fetched successfully",
             data: bookings
-        }); 
+        });
 
 
 
-    }catch(e){
+    } catch (e) {
         return res.status(500).json({
-            messsage:" error fetching bookings",
+            messsage: " error fetching bookings",
             error: e.message
         })
     }
 });
 
 
-bookingrouter.get("/booking/:bookingId", async function (req,res){
-    try{
-        const {bookingId} = req.params;
+bookingrouter.get("/booking/:bookingId", async function (req, res) {
+    try {
+        const { bookingId } = req.params;
 
-        if(!mongoose.Types.ObjectId.isValid(bookingId)){
+        if (!mongoose.Types.ObjectId.isValid(bookingId)) {
             return res.status(400).json({ message: "Invalid bookingId" });
         }
 
         const booking = await Booking_model.findById(bookingId);
 
-        if(!booking){
+        if (!booking) {
             return res.status(404).json({ message: "Booking not found" });
         }
 
@@ -131,6 +131,80 @@ bookingrouter.get("/booking/:bookingId", async function (req,res){
         });
     }
 });
+
+
+bookingrouter.put("/booking/:bookingId", async function (req, res) {
+    try {
+        const { bookingId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+            return res.status(400).json({ message: "Invalid bookingId" });
+        }
+
+        const validation = bookingSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                message: "validation error",
+                errors: validation.error.issues
+            })
+        }
+
+        const { shopId, customerName, slot, date, status } = validation.data;
+
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
+            return res.status(400).json({ message: "Invalid shopId" });
+        }
+
+        const shopExists = await shop_model.findById(shopId);
+
+        if (!shopExists) {
+            return res.status(404).json({
+                message: "Shop not found"
+            });
+        }
+
+        const existing = await Booking_model.findOne({
+            _id: { $ne: bookingId },
+            shopId,
+            date,
+            "slot.from": slot.from,
+            "slot.to": slot.to,
+            status: {
+                $in: ["waiting", "confirmed"]
+            }
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                message: "This slot is already booked"
+            });
+        }
+
+        const updatedBooking = await Booking_model.findByIdAndUpdate(
+            bookingId,
+            { shopId, customerName, slot, date, status },
+            { new: true }
+        );
+
+        if (!updatedBooking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        return res.status(200).json({
+            message: "Booking updated successfully",
+            data: updatedBooking
+        });     
+
+
+
+    }catch (e) {
+    return res.status(500).json({
+        message: "Error updating booking information",
+        error: e.message
+    });
+}   
+})
 
 
 
