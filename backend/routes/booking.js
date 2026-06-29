@@ -74,7 +74,7 @@ bookingrouter.post("/create_booking", async function (req, res) {
 });
 
 
-bookingrouter.get("/bookings/:shopId", async function (req, res)) {
+bookingrouter.get("/booking/:shopId", async function (req, res) {
     try{
         const {shopId }= req.params;
 
@@ -103,7 +103,37 @@ bookingrouter.get("/bookings/:shopId", async function (req, res)) {
             error: e.message
         })
     }
-},
+});
+
+
+bookingrouter.get("/booking/:bookingId", async function (req,res){
+    try{
+        const {bookingId} = req.params;
+
+        if(!mongoose.Types.ObjectId.isValid(bookingId)){
+            return res.status(400).json({ message: "Invalid bookingId" });
+        }
+
+        const booking = await Booking_model.findById(bookingId);
+
+        if(!booking){
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        return res.status(200).json({
+            message: "Booking fetched successfully",
+            data: booking
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error fetching booking",
+            error: error.message
+        });
+    }
+});
+
+
+
 
 module.exports = {
     bookingrouter
