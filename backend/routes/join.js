@@ -50,11 +50,12 @@ joinrouter.post("/join", async function (req, res) {
             phone,
             status: "waiting",
             joinedAt:{
-                
+
             }
         });
 
         const people_Ahead = await JoinQueue_model.countDocuments({
+            
             shopId,
             status: "waiting",
             joinedAt: { $lt: saved.joinedAt }
