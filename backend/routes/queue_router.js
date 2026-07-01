@@ -18,7 +18,7 @@ queue_router.get("/", async function (req, res) {
             return res.status(400).json({ message: "shopId required" });
         }
 
-        if (!mongoose.Types.ObjectId.isValide(shopId)) {
+        if (!mongoose.Types.ObjectId.isValid(shopId)) {
             return res.status(400).json({ message: "Invalid shopId" });
         }
 
@@ -100,8 +100,7 @@ queue_router.post("/next", async function (req, res) {
 
 
 
-shop_router.
 
-    module.exports = {
+module.exports = {
     queue_router
 };
