@@ -9,7 +9,7 @@ const { shop_model } = require("../models/queuedb")
 
 const { queuejoinSchema } = require("../zod_schema/zod_schema");
 
-joinrouter.post("/join", async function (req, res) {
+joinrouter.post("/", async function (req, res) {
     try {
         const validation = queuejoinSchema.safeParse(req.body);
 
@@ -48,10 +48,7 @@ joinrouter.post("/join", async function (req, res) {
             shopId,
             customerName,
             phone,
-            status: "waiting",
-            joinedAt:{
-
-            }
+            status: "waiting"
         });
 
         const people_Ahead = await JoinQueue_model.countDocuments({
